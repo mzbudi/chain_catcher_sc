@@ -39,10 +39,13 @@ impl Service for ChainCatcherScService {
     }
 
     async fn handle_query(&self, query: Self::Query) -> Self::QueryResponse {
+        let value = *self.state.value.get();
+
+        // Gunakan konstruktor baru untuk QueryRoot
+        let query_root = QueryRoot::new(value, self.runtime.clone());
+
         Schema::build(
-            QueryRoot {
-                value: *self.state.value.get(),
-            },
+            query_root,
             Operation::mutation_root(self.runtime.clone()),
             EmptySubscription,
         )
@@ -54,12 +57,27 @@ impl Service for ChainCatcherScService {
 
 struct QueryRoot {
     value: u64,
+    runtime: Arc<ServiceRuntime<ChainCatcherScService>>,
+}
+
+impl QueryRoot {
+    fn new(value: u64, runtime: Arc<ServiceRuntime<ChainCatcherScService>>) -> Self {
+        QueryRoot { value, runtime }
+    }
 }
 
 #[Object]
 impl QueryRoot {
-    async fn value(&self) -> &u64 {
-        &self.value
+    async fn value(&self) -> u64 {
+        self.value
+    }
+
+    async fn score(&self, name: String) -> Option<u64> {
+        let state = ChainCatcherScState::load(self.runtime.root_view_storage_context())
+            .await
+            .ok()?;
+
+        state.scores.get(&name).await.unwrap_or(None)
     }
 }
 

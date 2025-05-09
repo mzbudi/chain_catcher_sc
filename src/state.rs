@@ -1,4 +1,6 @@
-use linera_sdk::views::{linera_views, MapView, RegisterView, RootView, ViewStorageContext};
+use linera_sdk::views::{
+    linera_views, MapView, RegisterView, RootView, SetView, ViewStorageContext,
+};
 
 #[derive(RootView, async_graphql::SimpleObject)]
 #[view(context = "ViewStorageContext")]
