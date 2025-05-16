@@ -55,6 +55,12 @@ impl Service for ChainCatcherScService {
     }
 }
 
+#[derive(async_graphql::SimpleObject)]
+pub struct ScoreEntry {
+    pub name: String,
+    pub score: u64,
+}
+
 struct QueryRoot {
     value: u64,
     runtime: Arc<ServiceRuntime<ChainCatcherScService>>,
@@ -79,6 +85,22 @@ impl QueryRoot {
 
         state.scores.get(&name).await.unwrap_or(None)
     }
+
+    // async fn all_scores(&self) -> Vec<ScoreEntry> {
+    //     let state = ChainCatcherScState::load(self.runtime.root_view_storage_context())
+    //         .await
+    //         .expect("Failed to load state");
+
+    //     let mut entries = Vec::new();
+    //     let names = state.names.read().await;
+    //     for name in names {
+    //         if let Some(score) = state.scores.get(&name).await.unwrap_or(None) {
+    //             entries.push(ScoreEntry { name, score });
+    //         }
+    //     }
+
+    //     entries
+    // }
 }
 
 #[cfg(test)]

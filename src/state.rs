@@ -7,4 +7,5 @@ use linera_sdk::views::{
 pub struct ChainCatcherScState {
     pub value: RegisterView<u64>,
     pub scores: MapView<String, u64>,
+    // pub names: SetView<String>,
 }

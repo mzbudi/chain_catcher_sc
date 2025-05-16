@@ -52,10 +52,12 @@ impl Contract for ChainCatcherScContract {
                 Ok(Some(existing_score)) => {
                     if existing_score < score {
                         self.state.scores.insert(&name, score).unwrap();
+                        // self.state.names.insert(&name).unwrap();
                     }
                 }
                 Ok(None) => {
                     self.state.scores.insert(&name, score).unwrap();
+                    // self.state.names.insert(&name).unwrap();
                 }
                 Err(e) => {
                     eprintln!("Error getting score for {}: {:?}", name, e);
