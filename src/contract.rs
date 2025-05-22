@@ -8,6 +8,7 @@ use linera_sdk::{
     Contract, ContractRuntime,
 };
 
+use chain_catcher_sc::models::ScoreEntry;
 use chain_catcher_sc::Operation;
 
 use self::state::ChainCatcherScState;
@@ -48,21 +49,41 @@ impl Contract for ChainCatcherScContract {
                 self.state.value.set(self.state.value.get() + value);
             }
 
-            Operation::SetScore { name, score } => match self.state.scores.get(&name).await {
-                Ok(Some(existing_score)) => {
-                    if existing_score < score {
-                        self.state.scores.insert(&name, score).unwrap();
-                        // self.state.names.insert(&name).unwrap();
+            Operation::SetScore {
+                chain_id,
+                name,
+                score,
+            } => {
+                let key = name.clone();
+
+                match self.state.scores.get(&key).await {
+                    Ok(Some(existing_entry)) => {
+                        if score > existing_entry.score {
+                            let entry = ScoreEntry {
+                                chain_id,
+                                name: key.clone(),
+                                score,
+                            };
+                            self.state.scores.insert(&key, entry).unwrap_or_else(|_| {
+                                panic!("Failed to update Play Data for {:?} - {:?}", name, score);
+                            });
+                        }
+                    }
+                    Ok(None) => {
+                        let entry = ScoreEntry {
+                            chain_id,
+                            name: key.clone(),
+                            score,
+                        };
+                        self.state.scores.insert(&key, entry).unwrap_or_else(|_| {
+                            panic!("Failed to insert Play Data for {:?} - {:?}", name, score);
+                        });
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting score for {}: {:?}", key, e);
                     }
                 }
-                Ok(None) => {
-                    self.state.scores.insert(&name, score).unwrap();
-                    // self.state.names.insert(&name).unwrap();
-                }
-                Err(e) => {
-                    eprintln!("Error getting score for {}: {:?}", name, e);
-                }
-            },
+            }
         }
     }
 

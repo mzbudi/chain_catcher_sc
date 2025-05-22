@@ -1,9 +1,10 @@
-use async_graphql::{Request, Response};
+use async_graphql::{Request, Response, SimpleObject};
 use linera_sdk::{
     graphql::GraphQLMutationRoot,
-    linera_base_types::{ContractAbi, ServiceAbi},
+    linera_base_types::{ChainId, ContractAbi, ServiceAbi},
 };
 use serde::{Deserialize, Serialize};
+pub mod models;
 
 pub struct ChainCatcherScAbi;
 
@@ -19,6 +20,20 @@ impl ServiceAbi for ChainCatcherScAbi {
 
 #[derive(Debug, Deserialize, Serialize, GraphQLMutationRoot)]
 pub enum Operation {
-    Increment { value: u64 },
-    SetScore { name: String, score: u64 },
+    Increment {
+        value: u64,
+    },
+    SetScore {
+        chain_id: ChainId,
+        name: String,
+        score: u64,
+    },
 }
+
+// #[derive(
+//     Debug, Clone, Default, Deserialize, Eq, Ord, PartialOrd, PartialEq, Serialize, SimpleObject,
+// )]
+// pub struct Leaderboard {
+//     pub name: String,
+//     pub score: u64,
+// }

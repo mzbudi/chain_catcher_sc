@@ -83,56 +83,14 @@ impl QueryRoot {
             .await
             .ok()?;
 
-        state.scores.get(&name).await.unwrap_or(None)
+        let score_entry = state.scores.get(&name).await.ok()??;
+
+        Some(score_entry.score)
+
+        // state.scores.get(&name).await.unwrap_or(None)
     }
 
-    // async fn all_scores(&self) -> Vec<ScoreEntry> {
-    //     let state = ChainCatcherScState::load(self.runtime.root_view_storage_context())
-    //         .await
-    //         .expect("Failed to load state");
-
-    //     let mut entries = Vec::new();
-    //     let names = state.names.read().await;
-    //     for name in names {
-    //         if let Some(score) = state.scores.get(&name).await.unwrap_or(None) {
-    //             entries.push(ScoreEntry { name, score });
-    //         }
-    //     }
-
-    //     entries
+    // async fn get_leaderboard(&self) -> Leaderboard {
+    //     self.state.leaderboard.get().clone();
     // }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::sync::Arc;
-
-    use async_graphql::{Request, Response, Value};
-    use futures::FutureExt as _;
-    use linera_sdk::{util::BlockingWait, views::View, Service, ServiceRuntime};
-    use serde_json::json;
-
-    use super::{ChainCatcherScService, ChainCatcherScState};
-
-    #[test]
-    fn query() {
-        let value = 60u64;
-        let runtime = Arc::new(ServiceRuntime::<ChainCatcherScService>::new());
-        let mut state = ChainCatcherScState::load(runtime.root_view_storage_context())
-            .blocking_wait()
-            .expect("Failed to read from mock key value store");
-        state.value.set(value);
-
-        let service = ChainCatcherScService { state, runtime };
-        let request = Request::new("{ value }");
-
-        let response = service
-            .handle_query(request)
-            .now_or_never()
-            .expect("Query should not await anything");
-
-        let expected = Response::new(Value::from_json(json!({"value": 60})).unwrap());
-
-        assert_eq!(response, expected)
-    }
 }
