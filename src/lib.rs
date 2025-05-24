@@ -30,6 +30,9 @@ pub enum Operation {
         name: String,
         score: u64,
     },
+    RequestLeaderboard {
+        central_chain_id: ChainId,
+    },
 }
 
 #[derive(Debug, Deserialize, Serialize)]

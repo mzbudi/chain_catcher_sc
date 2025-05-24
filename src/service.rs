@@ -81,7 +81,11 @@ impl QueryRoot {
         state.scores.get(&name).await.ok()?
     }
 
-    // async fn get_leaderboard(&self) -> Leaderboard {
-    //     self.state.leaderboard.get().clone();
-    // }
+    async fn get_leaderboard(&self) -> Vec<ScoreEntry> {
+        let state = ChainCatcherScState::load(self.runtime.root_view_storage_context())
+            .await
+            .unwrap_or_else(|_| panic!("Failed to load state"));
+
+        state.leaderboard.get().clone()
+    }
 }

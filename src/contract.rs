@@ -95,6 +95,16 @@ impl Contract for ChainCatcherScContract {
                     .prepare_message(message)
                     .send_to(owner_chain_id);
             }
+
+            Operation::RequestLeaderboard { central_chain_id } => {
+                let message = ChainCatcherMessage::LeaderboardRequest {
+                    requester_chain_id: self.runtime.chain_id().clone(),
+                };
+
+                self.runtime
+                    .prepare_message(message)
+                    .send_to(central_chain_id);
+            }
         }
     }
 
