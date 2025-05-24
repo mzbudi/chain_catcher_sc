@@ -10,6 +10,7 @@ use linera_sdk::{
     ServiceRuntime,
 };
 
+use chain_catcher_sc::models::ScoreEntry;
 use chain_catcher_sc::Operation;
 
 use self::state::ChainCatcherScState;
@@ -55,12 +56,6 @@ impl Service for ChainCatcherScService {
     }
 }
 
-#[derive(async_graphql::SimpleObject)]
-pub struct ScoreEntry {
-    pub name: String,
-    pub score: u64,
-}
-
 struct QueryRoot {
     value: u64,
     runtime: Arc<ServiceRuntime<ChainCatcherScService>>,
@@ -78,16 +73,12 @@ impl QueryRoot {
         self.value
     }
 
-    async fn score(&self, name: String) -> Option<u64> {
+    async fn score(&self, name: String) -> Option<ScoreEntry> {
         let state = ChainCatcherScState::load(self.runtime.root_view_storage_context())
             .await
             .ok()?;
 
-        let score_entry = state.scores.get(&name).await.ok()??;
-
-        Some(score_entry.score)
-
-        // state.scores.get(&name).await.unwrap_or(None)
+        state.scores.get(&name).await.ok()?
     }
 
     // async fn get_leaderboard(&self) -> Leaderboard {

@@ -9,6 +9,7 @@ use linera_sdk::{
 };
 
 use chain_catcher_sc::models::ScoreEntry;
+use chain_catcher_sc::ChainCatcherMessage;
 use chain_catcher_sc::Operation;
 
 use self::state::ChainCatcherScState;
@@ -25,7 +26,7 @@ impl WithContractAbi for ChainCatcherScContract {
 }
 
 impl Contract for ChainCatcherScContract {
-    type Message = ();
+    type Message = ChainCatcherMessage;
     type Parameters = ();
     type InstantiationArgument = u64;
     type EventValue = ();
@@ -50,6 +51,7 @@ impl Contract for ChainCatcherScContract {
             }
 
             Operation::SetScore {
+                owner_chain_id,
                 chain_id,
                 name,
                 score,
@@ -83,11 +85,72 @@ impl Contract for ChainCatcherScContract {
                         eprintln!("Error getting score for {}: {:?}", key, e);
                     }
                 }
+                let message = ChainCatcherMessage::ScoreEntryMessage {
+                    chain_id,
+                    name,
+                    score,
+                };
+
+                self.runtime
+                    .prepare_message(message)
+                    .send_to(owner_chain_id);
             }
         }
     }
 
-    async fn execute_message(&mut self, _message: Self::Message) {}
+    async fn execute_message(&mut self, _message: Self::Message) {
+        let is_bouncing = self.runtime.message_is_bouncing().unwrap_or_else(|| {
+            panic!("Message delivery status has to be available when executing a message");
+        });
+
+        if is_bouncing {
+            return;
+        }
+
+        match _message {
+            ChainCatcherMessage::ScoreEntryMessage {
+                chain_id,
+                name,
+                score,
+            } => {
+                let mut leaderboard = self.state.leaderboard.get().clone();
+
+                match leaderboard.iter_mut().find(|entry| entry.name == name) {
+                    Some(existing_entry) => {
+                        if score > existing_entry.score {
+                            existing_entry.score = score;
+                            existing_entry.chain_id = chain_id;
+                        }
+                    }
+                    None => {
+                        leaderboard.push(ScoreEntry {
+                            chain_id,
+                            name: name.clone(),
+                            score,
+                        });
+                    }
+                }
+
+                leaderboard.sort_unstable_by(|a, b| b.score.cmp(&a.score));
+
+                self.state.leaderboard.set(leaderboard);
+            }
+
+            ChainCatcherMessage::LeaderboardRequest { requester_chain_id } => {
+                let leaderboard = self.state.leaderboard.get().clone();
+
+                let message = ChainCatcherMessage::LeaderboardResponse { leaderboard };
+
+                self.runtime
+                    .send_message(requester_chain_id.clone(), message)
+            }
+
+            ChainCatcherMessage::LeaderboardResponse { leaderboard } => {
+                // Chain lokal: update leaderboard dari response
+                self.state.leaderboard.set(leaderboard);
+            }
+        }
+    }
 
     async fn store(mut self) {
         self.state.save().await.expect("Failed to save state");

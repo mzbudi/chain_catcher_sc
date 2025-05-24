@@ -1,4 +1,3 @@
-// use chain_catcher_sc::Leaderboard;
 use chain_catcher_sc::models::ScoreEntry;
 use linera_sdk::views::{linera_views, MapView, RegisterView, RootView, ViewStorageContext};
 
@@ -7,5 +6,5 @@ use linera_sdk::views::{linera_views, MapView, RegisterView, RootView, ViewStora
 pub struct ChainCatcherScState {
     pub value: RegisterView<u64>,
     pub scores: MapView<String, ScoreEntry>,
-    // pub leaderboard: RegisterView<Vec<Leaderboard>>,
+    pub leaderboard: RegisterView<Vec<ScoreEntry>>,
 }
